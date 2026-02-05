@@ -1,0 +1,5 @@
+{
+  "name": "IVA Campo",
+  "description": "Financial management dashboard for agricultural producers, featuring IVA tracking, SISA status monitoring, and expense categorization.",
+  "requestFramePermissions": []
+}
