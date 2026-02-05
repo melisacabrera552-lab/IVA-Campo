@@ -1,7 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Header from '../components/Header';
+import { useAppContext } from '../context/AppContext';
 
 const Alerts = () => {
+  const { alertsCount, resolveAlert } = useAppContext();
+  const [f931Resolved, setF931Resolved] = useState(false);
+
+  const handleResolveF931 = () => {
+    if (!f931Resolved) {
+        setF931Resolved(true);
+        resolveAlert();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header 
@@ -9,39 +20,51 @@ const Alerts = () => {
         rightAction={
             <div className="relative flex items-center justify-center rounded-full w-10 h-10 bg-gray-50">
                 <span className="material-symbols-outlined text-text-main">notifications</span>
-                <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-urgent rounded-full border-2 border-white"></span>
+                {alertsCount > 0 && <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-urgent rounded-full border-2 border-white"></span>}
             </div>
         } 
       />
 
       <main className="p-4 pb-10">
         {/* Urgent Section */}
-        <h3 className="text-text-main text-sm font-extrabold tracking-widest uppercase mb-4 flex items-center gap-2">
-            PENDIENTES (3)
-            <span className="w-2 h-2 rounded-full bg-urgent animate-pulse"></span>
-        </h3>
+        {alertsCount > 0 ? (
+            <h3 className="text-text-main text-sm font-extrabold tracking-widest uppercase mb-4 flex items-center gap-2">
+                PENDIENTES ({alertsCount})
+                <span className="w-2 h-2 rounded-full bg-urgent animate-pulse"></span>
+            </h3>
+        ) : (
+            <h3 className="text-primary text-sm font-extrabold tracking-widest uppercase mb-4 flex items-center gap-2">
+                ¡TODO AL DÍA!
+                <span className="material-symbols-outlined text-sm">check</span>
+            </h3>
+        )}
 
         {/* Card 1: Urgent */}
-        <div className="mb-4 bg-surface rounded-xl shadow-float border-l-4 border-urgent overflow-hidden">
-            <div className="p-5">
-                <div className="flex items-center gap-2 mb-2">
-                    <span className="material-symbols-outlined text-urgent text-sm filled">error</span>
-                    <p className="text-urgent text-sm font-bold uppercase tracking-wider">HOY - URGENTE</p>
-                </div>
-                <h4 className="text-text-main text-xl font-bold mb-2">¿Pagaste el F.931?</h4>
-                <p className="text-gray-600 text-lg mb-5">Si no lo pagás hoy, perdés <strong className="text-urgent">$24.750</strong> de IVA por beneficios de pronto pago.</p>
-                <div className="flex flex-col gap-3">
-                    <button className="flex w-full items-center justify-center rounded-xl h-14 bg-primary text-white text-lg font-bold shadow-md active:scale-95 transition-transform">
-                        <span className="material-symbols-outlined mr-2">check_circle</span>
-                        Ya pagué
-                    </button>
-                    <button className="flex w-full items-center justify-center rounded-xl h-12 bg-gray-100 text-text-main text-base font-semibold active:scale-95 transition-transform">
-                        <span className="material-symbols-outlined mr-2">timer</span>
-                        Recordar en 1 hora
-                    </button>
+        {!f931Resolved && (
+            <div className="mb-4 bg-surface rounded-xl shadow-float border-l-4 border-urgent overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="material-symbols-outlined text-urgent text-sm filled">error</span>
+                        <p className="text-urgent text-sm font-bold uppercase tracking-wider">HOY - URGENTE</p>
+                    </div>
+                    <h4 className="text-text-main text-xl font-bold mb-2">¿Pagaste el F.931?</h4>
+                    <p className="text-gray-600 text-lg mb-5">Si no lo pagás hoy, perdés <strong className="text-urgent">$24.750</strong> de IVA por beneficios de pronto pago.</p>
+                    <div className="flex flex-col gap-3">
+                        <button 
+                            onClick={handleResolveF931}
+                            className="flex w-full items-center justify-center rounded-xl h-14 bg-primary text-white text-lg font-bold shadow-md active:scale-95 transition-transform"
+                        >
+                            <span className="material-symbols-outlined mr-2">check_circle</span>
+                            Ya pagué
+                        </button>
+                        <button className="flex w-full items-center justify-center rounded-xl h-12 bg-gray-100 text-text-main text-base font-semibold active:scale-95 transition-transform">
+                            <span className="material-symbols-outlined mr-2">timer</span>
+                            Recordar en 1 hora
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
+        )}
 
         {/* Card 2: Warning */}
         <div className="mb-4 bg-surface rounded-xl p-5 shadow-card border-l-4 border-accent flex justify-between gap-4">

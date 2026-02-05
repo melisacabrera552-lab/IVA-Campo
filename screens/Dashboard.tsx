@@ -1,8 +1,28 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAppContext } from '../context/AppContext';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { totals, alertsCount, formatCurrency, isLoading } = useAppContext();
+
+  // Calculate percentages for progress bars (max 1M for demo scale)
+  const maxScale = Math.max(totals.ivaSales, totals.ivaExpenses, 1000000);
+  const salesPercent = Math.min((totals.ivaSales / maxScale) * 100, 100);
+  const expensesPercent = Math.min((totals.ivaExpenses / maxScale) * 100, 100);
+
+  const isPositiveBalance = totals.balance >= 0;
+
+  // Dynamic Date
+  const currentDate = new Date().toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -15,11 +35,15 @@ const Dashboard = () => {
         </div>
         <div className="flex-1 px-3">
           <h2 className="text-text-main text-lg font-bold">Hola Juan 👋</h2>
-          <p className="text-text-sec text-xs font-semibold uppercase tracking-wider">Octubre 2023</p>
+          <p className="text-text-sec text-xs font-semibold uppercase tracking-wider capitalize">{currentDate}</p>
         </div>
         <div className="relative cursor-pointer" onClick={() => navigate('/alerts')}>
           <span className="material-symbols-outlined text-[28px] text-text-main">notifications</span>
-          <div className="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center font-bold border-2 border-surface">3</div>
+          {alertsCount > 0 && (
+            <div className="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center font-bold border-2 border-surface">
+              {alertsCount}
+            </div>
+          )}
         </div>
       </header>
 
@@ -32,29 +56,40 @@ const Dashboard = () => {
             <div>
               <div className="flex justify-between items-end mb-2">
                 <span className="text-text-sec text-sm font-medium">IVA de mis ventas</span>
-                <span className="text-text-main font-bold">$450.000</span>
+                <span className="text-text-main font-bold">{formatCurrency(totals.ivaSales)}</span>
               </div>
               <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-accent w-2/3 rounded-full"></div>
+                <div 
+                  className="h-full bg-accent rounded-full transition-all duration-1000" 
+                  style={{ width: `${salesPercent}%` }}
+                ></div>
               </div>
             </div>
             
             <div>
               <div className="flex justify-between items-end mb-2">
                 <span className="text-text-sec text-sm font-medium">IVA de mis compras</span>
-                <span className="text-text-main font-bold">$680.000</span>
+                <span className="text-text-main font-bold">{formatCurrency(totals.ivaExpenses)}</span>
               </div>
               <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-primary w-full rounded-full"></div>
+                <div 
+                  className="h-full bg-primary rounded-full transition-all duration-1000" 
+                  style={{ width: `${expensesPercent}%` }}
+                ></div>
               </div>
             </div>
           </div>
 
           <div className="my-5 border-t border-dashed border-gray-200"></div>
 
-          <div className="bg-primary/5 rounded-xl p-4 text-center">
-             <div className="text-primary text-xl font-black mb-1">💰 A TU FAVOR: $230.000</div>
-             <div className="text-primary/80 text-sm font-semibold">(No pagás IVA este mes)</div>
+          <div className={`${isPositiveBalance ? 'bg-primary/5 text-primary' : 'bg-urgent/5 text-urgent'} rounded-xl p-4 text-center transition-colors`}>
+             <div className="text-xl font-black mb-1">
+                {isPositiveBalance ? '💰 A TU FAVOR: ' : '📉 A PAGAR: '}
+                {formatCurrency(Math.abs(totals.balance))}
+             </div>
+             <div className="opacity-80 text-sm font-semibold">
+                {isPositiveBalance ? '(No pagás IVA este mes)' : '(Saldo a pagar a AFIP)'}
+             </div>
           </div>
         </div>
 

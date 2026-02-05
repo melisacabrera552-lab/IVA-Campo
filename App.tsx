@@ -3,7 +3,7 @@ import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import Landing from './screens/Landing';
 import Dashboard from './screens/Dashboard';
 import { SaleTypeSelect, SaleForm, SaleSuccess } from './screens/Sales';
-import { ExpenseCategory, ExpenseWarning } from './screens/Expenses';
+import { ExpenseCategory, ExpenseWarning, ExpenseForm } from './screens/Expenses';
 import SisaStatus from './screens/SisaStatus';
 import Simulator from './screens/Simulator';
 import History from './screens/History';
@@ -32,6 +32,7 @@ const AppContent = () => {
           {/* Expenses Flow */}
           <Route path="/expenses/category" element={<ExpenseCategory />} />
           <Route path="/expenses/warning" element={<ExpenseWarning />} />
+          <Route path="/expenses/form" element={<ExpenseForm />} />
           
           {/* Tools & Status */}
           <Route path="/sisa" element={<SisaStatus />} />

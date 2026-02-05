@@ -1,8 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAppContext, Transaction } from '../context/AppContext';
 
 const History = () => {
   const navigate = useNavigate();
+  const { transactions, formatCurrency, totals } = useAppContext();
+  const [filter, setFilter] = useState<'all' | 'sale' | 'expense'>('all');
+
+  const filteredTransactions = transactions.filter(t => filter === 'all' || t.type === filter);
 
   return (
     <div className="min-h-screen bg-background">
@@ -16,48 +21,42 @@ const History = () => {
 
         {/* Filter Chips */}
         <div className="flex gap-3 p-4 overflow-x-auto no-scrollbar">
-            <Chip label="Todos" active />
-            <Chip label="Ventas" />
-            <Chip label="Compras" />
+            <Chip label="Todos" active={filter === 'all'} onClick={() => setFilter('all')} />
+            <Chip label="Ventas" active={filter === 'sale'} onClick={() => setFilter('sale')} />
+            <Chip label="Compras" active={filter === 'expense'} onClick={() => setFilter('expense')} />
         </div>
 
         {/* List */}
         <main className="px-4 py-2 flex flex-col gap-3 pb-24">
-            <TransactionCard 
-                icon="🌾" 
-                title="Venta de Soja" 
-                date="12 Oct" 
-                amount="$450.000" 
-                iva="+$52.500 IVA" 
-                ivaColor="bg-accent/10 text-accent"
-            />
-            <TransactionCard 
-                icon="🌱" 
-                title="Fertilizantes" 
-                date="10 Oct" 
-                amount="-$120.000" 
-                iva="- $25.200 IVA" 
-                ivaColor="bg-primary/10 text-primary"
-            />
-             <TransactionCard 
-                icon="🚜" 
-                title="Flete Cosecha" 
-                date="05 Oct" 
-                amount="-$85.000" 
-                iva="- $8.925 IVA" 
-                ivaColor="bg-primary/10 text-primary"
-            />
+            {filteredTransactions.map((t) => (
+                <TransactionCard 
+                    key={t.id}
+                    icon={t.icon}
+                    title={t.category}
+                    date={t.date.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
+                    amount={t.type === 'expense' ? `-${formatCurrency(t.amount)}` : formatCurrency(t.amount)}
+                    iva={`${t.type === 'expense' ? '-' : '+'} ${formatCurrency(t.iva)} IVA`}
+                    ivaColor={t.type === 'sale' ? "bg-accent/10 text-accent" : "bg-primary/10 text-primary"}
+                />
+            ))}
+
+            {filteredTransactions.length === 0 && (
+                <div className="text-center py-10 opacity-50">
+                    <span className="material-symbols-outlined text-4xl mb-2">content_paste_off</span>
+                    <p>No hay movimientos registrados</p>
+                </div>
+            )}
 
             {/* Monthly Summary */}
             <div className="mt-4 p-5 rounded-2xl bg-[#111812] text-white shadow-lg">
                 <div className="flex justify-between items-center mb-4">
-                    <span className="text-sm font-medium opacity-80 uppercase tracking-widest">Saldo IVA Mes</span>
+                    <span className="text-sm font-medium opacity-80 uppercase tracking-widest">Saldo IVA Global</span>
                     <span className="material-symbols-outlined opacity-60">info</span>
                 </div>
                 <div className="flex justify-between items-end">
                     <div>
-                        <p className="text-3xl font-bold">+$18.375</p>
-                        <p className="text-xs opacity-60 mt-1">A favor de AFIP</p>
+                        <p className="text-3xl font-bold">{totals.balance >= 0 ? '+' : '-'}{formatCurrency(Math.abs(totals.balance))}</p>
+                        <p className="text-xs opacity-60 mt-1">{totals.balance >= 0 ? 'A favor (Crédito Fiscal)' : 'A pagar a AFIP'}</p>
                     </div>
                     <div className="bg-primary/20 p-2 rounded-lg">
                         <span className="material-symbols-outlined text-primary">account_balance_wallet</span>
@@ -69,8 +68,11 @@ const History = () => {
   );
 };
 
-const Chip = ({ label, active = false }: { label: string, active?: boolean }) => (
-    <button className={`flex h-10 shrink-0 items-center justify-center rounded-xl px-6 font-semibold text-sm transition-colors ${active ? 'bg-primary text-white shadow-sm' : 'bg-surface border border-gray-200 text-text-main'}`}>
+const Chip = ({ label, active = false, onClick }: { label: string, active?: boolean, onClick: () => void }) => (
+    <button 
+        onClick={onClick}
+        className={`flex h-10 shrink-0 items-center justify-center rounded-xl px-6 font-semibold text-sm transition-colors ${active ? 'bg-primary text-white shadow-sm' : 'bg-surface border border-gray-200 text-text-main'}`}
+    >
         {label}
     </button>
 );

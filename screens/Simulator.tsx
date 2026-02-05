@@ -1,7 +1,21 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
+import { useAppContext } from '../context/AppContext';
 
 const Simulator = () => {
+  const { formatCurrency } = useAppContext();
+  const [sales, setSales] = useState(5000000);
+  const [expenses, setExpenses] = useState(3500000);
+
+  const ivaSales = sales * 0.105;
+  const ivaExpenses = expenses * 0.21;
+  const balance = ivaExpenses - ivaSales; // Positive means user has credit
+
+  // Calculate percentages relative to a base max for bar visualization
+  const maxVal = Math.max(ivaSales, ivaExpenses) * 1.2;
+  const salesW = (ivaSales / maxVal) * 100;
+  const expW = (ivaExpenses / maxVal) * 100;
+
   return (
     <div className="min-h-screen bg-background pb-10">
       <Header title="Simulador 🔮" />
@@ -11,8 +25,16 @@ const Simulator = () => {
         <section>
             <h3 className="text-xs font-bold text-text-sec uppercase tracking-wider mb-3 px-1">PROYECTÁ TU AÑO</h3>
             <div className="space-y-4">
-                <InputCard label="Ventas estimadas (sin IVA)" value="5.000.000" />
-                <InputCard label="Compras/Gastos estimados" value="3.500.000" />
+                <InputCard 
+                    label="Ventas estimadas (sin IVA)" 
+                    value={sales} 
+                    onChange={setSales} 
+                />
+                <InputCard 
+                    label="Compras/Gastos estimados" 
+                    value={expenses} 
+                    onChange={setExpenses} 
+                />
             </div>
         </section>
 
@@ -20,15 +42,21 @@ const Simulator = () => {
             <h3 className="text-xs font-bold text-primary uppercase tracking-wider mb-6 text-center">RESULTADO PROYECTADO</h3>
             
             <div className="space-y-6">
-                <ProgressBar label="IVA Ventas (10,5%)" amount="$525.000" percent="55%" color="bg-accent" />
-                <ProgressBar label="IVA Compras (21%)" amount="$735.000" percent="85%" color="bg-primary" />
+                <ProgressBar label="IVA Ventas (10,5%)" amount={formatCurrency(ivaSales)} percent={`${salesW}%`} color="bg-accent" />
+                <ProgressBar label="IVA Compras (21%)" amount={formatCurrency(ivaExpenses)} percent={`${expW}%`} color="bg-primary" />
             </div>
 
             <div className="mt-8 pt-6 border-t border-primary/10 text-center">
-                <p className="text-2xl font-black text-primary mb-2">💰 SALDO A FAVOR: $210.000</p>
+                <p className="text-2xl font-black text-primary mb-2">
+                    {balance >= 0 ? '💰 SALDO A FAVOR: ' : '💸 A PAGAR: '} 
+                    {formatCurrency(Math.abs(balance))}
+                </p>
                 <div className="bg-white/50 p-3 rounded-xl inline-block">
                     <p className="text-sm text-text-sec font-medium leading-tight">
-                        ⚠️ "Plata atrapada" en el Estado que pierde valor con la inflación
+                        {balance >= 0 
+                            ? '⚠️ "Plata atrapada" en el Estado que pierde valor con la inflación'
+                            : 'ℹ️ Deberás pagar este monto a la AFIP'
+                        }
                     </p>
                 </div>
             </div>
@@ -47,14 +75,15 @@ const Simulator = () => {
   );
 };
 
-const InputCard = ({ label, value }: { label: string, value: string }) => (
+const InputCard = ({ label, value, onChange }: { label: string, value: number, onChange: (val: number) => void }) => (
     <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
         <label className="block text-xs font-semibold text-text-sec mb-1">{label}</label>
         <div className="flex items-center">
             <span className="text-2xl font-bold text-gray-400 mr-1">$</span>
             <input 
-                type="text" 
-                defaultValue={value}
+                type="number" 
+                value={value}
+                onChange={(e) => onChange(Number(e.target.value))}
                 className="bg-transparent border-none p-0 text-2xl font-black focus:ring-0 w-full text-text-main" 
             />
         </div>
@@ -68,7 +97,7 @@ const ProgressBar = ({ label, amount, percent, color }: any) => (
             <span className="text-sm font-bold text-text-main">{amount}</span>
         </div>
         <div className="w-full bg-gray-200 h-4 rounded-full overflow-hidden">
-            <div className={`${color} h-full rounded-full`} style={{ width: percent }}></div>
+            <div className={`${color} h-full rounded-full transition-all duration-300`} style={{ width: percent }}></div>
         </div>
     </div>
 );

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
+import { useAppContext } from '../context/AppContext';
 
 // --- Screen 1: Select Type ---
 export const SaleTypeSelect = () => {
@@ -8,7 +9,7 @@ export const SaleTypeSelect = () => {
 
   const Option = ({ icon, title, subtitle }: { icon: string; title: string; subtitle: string }) => (
     <button 
-      onClick={() => navigate('/sales/form')}
+      onClick={() => navigate('/sales/form', { state: { category: title, icon } })}
       className="w-full flex items-center gap-4 p-4 bg-surface rounded-xl border border-gray-100 shadow-sm active:scale-[0.98] transition-all group text-left"
     >
       <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
@@ -41,17 +42,38 @@ export const SaleTypeSelect = () => {
 // --- Screen 2: Form ---
 export const SaleForm = () => {
   const navigate = useNavigate();
+  const { addTransaction, formatCurrency } = useAppContext();
   const [amount, setAmount] = useState('');
   const [retention, setRetention] = useState('');
+  
+  // Get state from navigation (category info)
+  const navState = window.history.state?.usr || { category: 'Granos', icon: '🌾' };
 
   const calculateIVA = () => {
     const val = parseFloat(amount.replace(/[^0-9.]/g, '')) || 0;
-    return (val * 0.105).toLocaleString('es-AR', { minimumFractionDigits: 2 });
+    return val * 0.105;
+  };
+
+  const handleSave = () => {
+      const val = parseFloat(amount.replace(/[^0-9.]/g, '')) || 0;
+      if (val <= 0) return;
+
+      const iva = calculateIVA();
+      
+      addTransaction({
+          type: 'sale',
+          category: `Venta de ${navState.category}`,
+          amount: val,
+          iva: iva,
+          icon: navState.icon
+      });
+
+      navigate('/sales/success', { state: { amount: val, iva, type: navState.category } });
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header title="Venta Granos" />
+      <Header title={`Venta ${navState.category}`} />
       
       <div className="p-4 flex-1 flex flex-col gap-8">
         {/* Input 1 */}
@@ -82,7 +104,7 @@ export const SaleForm = () => {
         <div>
             <h3 className="text-lg font-bold text-text-main mb-3">El IVA de esta venta es:</h3>
             <div className="bg-gray-100 rounded-xl p-5 border border-dashed border-gray-300 text-center">
-                <p className="text-text-main text-lg font-bold">IVA 10,5% = <span className="text-primary">${amount ? calculateIVA() : '0,00'}</span></p>
+                <p className="text-text-main text-lg font-bold">IVA 10,5% = <span className="text-primary">{formatCurrency(calculateIVA())}</span></p>
             </div>
         </div>
 
@@ -112,7 +134,7 @@ export const SaleForm = () => {
 
       <div className="p-4 bg-surface border-t border-gray-100">
         <button 
-            onClick={() => navigate('/sales/success')}
+            onClick={handleSave}
             className="w-full bg-primary hover:bg-primary-dark text-white font-bold h-14 rounded-xl shadow-lg shadow-primary/20 active:scale-[0.98] transition-all"
         >
             CARGAR ESTA VENTA
@@ -125,6 +147,8 @@ export const SaleForm = () => {
 // --- Screen 3: Success ---
 export const SaleSuccess = () => {
     const navigate = useNavigate();
+    const { formatCurrency } = useAppContext();
+    const state = window.history.state?.usr || { amount: 0, iva: 0, type: 'Granos' };
     
     return (
         <div className="min-h-screen bg-surface flex flex-col">
@@ -140,7 +164,7 @@ export const SaleSuccess = () => {
 
                 <h1 className="text-3xl font-bold text-center text-text-main mb-4">¡Venta cargada con éxito!</h1>
                 <p className="text-center text-gray-500 text-lg mb-10 max-w-xs">
-                    La operación de <strong className="text-text-main">Granos</strong> por <strong className="text-text-main">$450.000</strong> ha sido registrada correctamente.
+                    La operación de <strong className="text-text-main">{state.type}</strong> por <strong className="text-text-main">{formatCurrency(state.amount)}</strong> ha sido registrada correctamente.
                 </p>
 
                 <div className="w-full bg-surface border border-gray-100 rounded-xl p-6 shadow-card">
@@ -151,11 +175,11 @@ export const SaleSuccess = () => {
                     <div className="space-y-4">
                         <div className="flex justify-between">
                             <span className="text-text-sec font-medium">IVA generado</span>
-                            <span className="text-text-main font-bold text-lg">$52.500</span>
+                            <span className="text-text-main font-bold text-lg">{formatCurrency(state.iva)}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-text-sec font-medium">Retención cargada</span>
-                            <span className="text-text-main font-bold text-lg">$15.000</span>
+                            <span className="text-text-main font-bold text-lg">$0,00</span>
                         </div>
                     </div>
                 </div>
